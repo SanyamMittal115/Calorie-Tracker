@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Weekly Calorie Tracker</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172033;background:#f5f7fb}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1050px;margin:auto;padding:32px 20px 60px}header{margin-bottom:24px}h1{font-size:clamp(2rem,5vw,3.4rem);margin:0 0 8px;letter-spacing:-.04em}.sub{color:#667085;margin:0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{background:white;border:1px solid #e5e7eb;border-radius:18px;padding:22px;box-shadow:0 8px 28px rgba(16,24,40,.05)}h2{margin:0 0 16px;font-size:1.1rem}.inputs{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field label{display:block;font-size:.82rem;font-weight:650;margin-bottom:5px;color:#475467}.field input{width:100%;border:1px solid #d0d5dd;border-radius:10px;padding:11px 12px;font:inherit;outline:none}.field input:focus{border-color:#667085;box-shadow:0 0 0 3px #f2f4f7}.actions{display:flex;gap:10px;margin-top:16px}.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}.primary{background:#172033;color:white}.secondary{background:#eef1f6;color:#344054}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}.stat{background:#f8fafc;border-radius:12px;padding:14px}.stat b{display:block;font-size:1.35rem}.stat span{font-size:.76rem;color:#667085}.chart{height:260px;display:flex;align-items:flex-end;gap:10px;padding-top:20px;border-bottom:1px solid #d0d5dd}.bar-wrap{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:7px}.bar{width:min(48px,80%);background:#172033;border-radius:8px 8px 3px 3px;min-height:3px;transition:.25s}.value{font-size:.72rem;color:#667085}.day{font-size:.72rem;color:#667085;margin-bottom:-23px}.wide{grid-column:1/-1}.table{width:100%;border-collapse:collapse}.table th,.table td{text-align:left;padding:10px;border-bottom:1px solid #eaecf0}.table th{font-size:.78rem;color:#667085}.notice{display:none;margin-top:12px;padding:10px 12px;border-radius:9px;background:#ecfdf3;color:#027a48;font-size:.88rem}@media(max-width:760px){.grid{grid-template-columns:1fr}.inputs{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.wide{grid-column:auto}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Weekly Calorie Tracker</h1><p class="sub">Log your daily calories and see your week at a glance. Your entries are saved in this browser.</p></header>
+<div class="grid">
+<section class="card"><h2>Enter this week's calories</h2><div class="inputs" id="inputs"></div><div class="actions"><button class="btn primary" id="save">Save week</button><button class="btn secondary" id="reset">Reset</button></div><div class="notice" id="notice">Saved successfully.</div></section>
+<section class="card"><h2>Weekly overview</h2><div class="stats"><div class="stat"><b id="total">0</b><span>Total calories</span></div><div class="stat"><b id="avg">0</b><span>Daily average</span></div><div class="stat"><b id="highest">—</b><span>Highest day</span></div></div><div class="chart" id="chart"></div></section>
+<section class="card wide"><h2>Daily breakdown</h2><table class="table"><thead><tr><th>Day</th><th>Calories</th><th>Share of week</th></tr></thead><tbody id="rows"></tbody></table></section>
+</div></div>
+<script>
+const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const defaults=[1800,2000,2200,2100,2300,2500,2400];
+let values=JSON.parse(localStorage.getItem('weeklyCalories')||'null')||defaults;
+const inputs=document.getElementById('inputs');
+days.forEach((d,i)=>{inputs.insertAdjacentHTML('beforeend',`<div class="field"><label for="d${i}">${d}</label><input id="d${i}" type="number" min="0" step="1" value="${values[i]}"></div>`)});
+function render(){
+ const total=values.reduce((a,b)=>a+b,0), avg=Math.round(total/7), max=Math.max(...values), hi=days[values.indexOf(max)];
+ document.getElementById('total').textContent=total.toLocaleString();document.getElementById('avg').textContent=avg.toLocaleString();document.getElementById('highest').textContent=hi;
+ const ceiling=Math.max(max,1);document.getElementById('chart').innerHTML=values.map((v,i)=>`<div class="bar-wrap"><span class="value">${v.toLocaleString()}</span><div class="bar" style="height:${Math.max(2,v/ceiling*82)}%" title="${days[i]}: ${v}"></div><span class="day">${days[i].slice(0,3)}</span></div>`).join('');
+ document.getElementById('rows').innerHTML=values.map((v,i)=>`<tr><td>${days[i]}</td><td>${v.toLocaleString()}</td><td>${total?((v/total)*100).toFixed(1):'0.0'}%</td></tr>`).join('');
+}
+document.getElementById('save').onclick=()=>{values=days.map((_,i)=>Math.max(0,Number(document.getElementById('d'+i).value)||0));localStorage.setItem('weeklyCalories',JSON.stringify(values));render();const n=document.getElementById('notice');n.style.display='block';setTimeout(()=>n.style.display='none',1800)};
+document.getElementById('reset').onclick=()=>{values=[0,0,0,0,0,0,0];days.forEach((_,i)=>document.getElementById('d'+i).value=0);localStorage.removeItem('weeklyCalories');render()};render();
+</script>
+</body></html>
